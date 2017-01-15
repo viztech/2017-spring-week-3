@@ -21,6 +21,48 @@ function dataLoaded(err,trips,stations){
 
 	//All trips, sorted by startTime?
 
+
+/*	Part2: apply filters on dimensions
+	Dimensions can be filtered using 
+		.filter
+		.filterExact(value)
+		.filterRange([min,max])
+		.filterFunction(function)
+	or unfiltered using
+		.filterAll()
+
+	Filters are "stateful" i.e. remembered by the crossfilter. 
+	Thus, a filter on dimension A will remain active as you apply another filter on dimension B
+*/
+	//Trips originating from station id 4, ending in station id 18, in the year 2012
+	//Sorted by duration
+
+
+	//Same as the previous one, except in the year 2013
+	//Sorted by duration
+
+
+	//All trips ending in station 18 in the year 2013, sorted by time of arrival
+
+
+/*	Part 3: group by dimension
+	Records can be grouped in hierarchies based on similar values on a dimensions
+
+	For example, all of our trips can be grouped by the startStn dimension
+
+	By default, all of the records in each group will be reduced to a "count"
+
+	!!!Groups observe filters on other dimensions!!!
+*/
+	//Construct a group on the startStn dimension
+
+
+	//What's wrong with the previous one? How do we fix it?
+
+
+	//Advanced: how do we tell the group not to automatically reduce by count?
+
+
 }
 
 function parseTrips(d){
