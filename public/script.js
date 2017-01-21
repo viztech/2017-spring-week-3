@@ -50,8 +50,17 @@ function dataLoaded(err,trips,stations){
 		});
 
 	//A large blcok of code: how do we refractor this?
+}
 
-	//Histogram of duration distribution
+function update(arr){
+	console.log(stationMap.get(startStation) + ' to ' + stationMap.get(endStation));
+	console.log(arr);
+
+	drawDurationHistogram(arr,plot1);
+	drawTimeSeries(arr,plot2);
+}
+
+function drawDurationHistogram(arr,plot){
 	var MIN_DURATION = 0, MAX_DURATION = 3600; //Note the naming convention: all caps indicate constants
 	var histogramDuration = d3.histogram()
 		.value(function(d,i){return d.duration})
@@ -60,30 +69,46 @@ function dataLoaded(err,trips,stations){
 
 	//Represent
 	var scaleX = d3.scaleLinear().domain([MIN_DURATION,MAX_DURATION]).range([0,w]),
-		scaleY = d3.scaleLinear().domain([0,d3.max(histogramDuration(trips),function(d){return d.length})]).range([h,0]);
+		scaleY = d3.scaleLinear().domain([0,d3.max(histogramDuration(arr),function(d){return d.length})]).range([h,0]);
 
-	var bins = plot1.classed('histogram',true).selectAll('.bin')
-		.data(histogramDuration(trips))
-		.enter()
+	var bins = plot.classed('histogram',true).selectAll('.bin')
+		.data(histogramDuration(arr)); //UPDATE
+
+	var binsEnter = bins.enter()
 		.append('rect').attr('class','bin')
 		.attr('x',function(d){return scaleX(d.x0)})
+		.attr('width',function(d){return scaleX(d.x1) - scaleX(d.x0)});
+
+	bins.merge(binsEnter)
+		.attr('x',function(d){return scaleX(d.x0)})
 		.attr('width',function(d){return scaleX(d.x1) - scaleX(d.x0)})
+		.transition()
 		.attr('y', function(d){return scaleY(d.length)})
 		.attr('height',function(d){return h - scaleY(d.length)});
+
+	bins.exit().remove();
 
 	//x and y axis
 	var xAxis = d3.axisBottom()
 		.scale(scaleX)
 		.tickValues(d3.range(MIN_DURATION,MAX_DURATION+1,60*5))
 		.tickFormat(function(tick){return tick/60 + " min"});
-	var yAxis = d3.axisLeft();
 
-	plot1.append('g').attr('class','axis axis-x')
+	var xAxisNode = plot.selectAll('.axis-x')
+		.data([0]);
+
+	xAxisNode
+		.enter()
+		.append('g').attr('class','axis axis-x')
 		.attr('transform','translate(0,'+h+')')
+		.merge(xAxisNode)
+		.transition()
 		.call(xAxis);
+}
 
+function drawTimeSeries(arr,plot){
 	//Time-series
-		var t0 = new Date(2011,0,1), t1 = new Date(2013,11,31),
+	var t0 = new Date(2011,0,1), t1 = new Date(2013,11,31),
 		tThresholds = d3.timeDay.range(t0,t1,1); //interval.range(start, stop[, step]
 
 	var histogramTime = d3.histogram()
@@ -98,7 +123,7 @@ function dataLoaded(err,trips,stations){
 		.domain([t0,t1])
 		.range([0,w]);
 	var scaleYTime = d3.scaleLinear()
-		.domain([0,d3.max(histogramTime(trips),function(d){return d.length})])
+		.domain([0,d3.max(histogramTime(arr),function(d){return d.length})])
 		.range([h,0])
 
 	var line = d3.line()
@@ -110,32 +135,50 @@ function dataLoaded(err,trips,stations){
 		.y1(function(d){return scaleYTime(d.length)})
 		.y0(h);
 
-	plot2.append('path').attr('class','area')
-		.datum(histogramTime(trips))
+	var areaNode = plot.selectAll('.area')
+		.data([histogramTime(arr)]);
+	areaNode.enter()
+		.append('path').attr('class','area')
+		.merge(areaNode)
+		.transition()
 		.attr('d',area);
-	plot2.append('path').attr('class','line')
-		.datum(histogramTime(trips))
+
+	var lineNode = plot.selectAll('.line')
+		.data([histogramTime(arr)]);
+	lineNode.enter()
+		.append('path').attr('class','line')
+		.merge(lineNode)
+		.transition()
 		.attr('d',line);
+
 	//Axis
-	xAxis.scale(scaleXTime)
+	var xAxis = d3.axisBottom()
+		.scale(scaleXTime)
 		.tickValues(null)
 		.tickFormat(null)
 		.ticks(d3.timeMonth.every(3));
-	yAxis
+	var yAxis = d3.axisLeft()
 		.tickSize(-w)
-		.tickValues(d3.range(0,600,100))
+		.ticks(5)
 		.scale(scaleYTime);
 
-	plot2.append('g').attr('transform','translate(0,'+h+')')
+	var xAxisNode = plot.selectAll('.axis-x')
+		.data([0]);
+	xAxisNode.enter()
+		.append('g').attr('transform','translate(0,'+h+')')
+		.attr('class','axis axis-x')
+		.merge(xAxisNode)
+		.transition()
 		.call(xAxis);
-	plot2.insert('g','.line').attr('class','axis axis-y') //line is "inserted" before area
+
+	var yAxisNode = plot.selectAll('.axis-y')
+		.data([0]);
+	yAxisNode.enter()
+		.insert('g','.line').attr('class','axis axis-y')
+		.merge(yAxisNode)
+		.transition()
 		.call(yAxis);
 
-}
-
-function update(arr){
-	console.log(stationMap.get(startStation) + ' to ' + stationMap.get(endStation));
-	console.log(arr);
 }
 
 function parseTrips(d){
