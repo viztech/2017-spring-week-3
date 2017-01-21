@@ -12,6 +12,11 @@ var plots = d3.selectAll('.plot')
 var plot1 = plots.filter(function(d,i){ return i===0;}),
 	plot2 = plots.filter(function(d,i){return i===1}).classed('time-series',true);
 
+//Use a d3 map to store the list of station name, station id pairs as a map
+//d3 Methods to review
+	//d3.map()
+var stationMap = d3.map();
+
 d3.queue()
 	.defer(d3.csv,'./data/hubway_trips_reduced.csv',parseTrips)
 	.defer(d3.csv,'./data/hubway_stations.csv',parseStations)
@@ -21,7 +26,7 @@ function dataLoaded(err,trips,stations){
 	//create a crossfilter
 	var cf = crossfilter(trips);
 
-	
+
 
 }
 
@@ -40,6 +45,10 @@ function parseTrips(d){
 }
 
 function parseStations(d){
+	stationMap.set(d.station, d.id);
+
+	
+
 	return {
 		id:d.id,
 		lngLat:[+d.lng,+d.lat],
