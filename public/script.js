@@ -1,4 +1,6 @@
-/*Example 2: This example demonstrates using Bootstrap UI elements to interact with crossfilter
+/*Example 3: This example is meant to demonstrate a few things:
+* how we might begin to structure code so it's more modular
+* review the enter-exit-update pattern in full
 */
 var m = {t:85,r:100,b:50,l:100},
 	w = document.getElementById('plot1').clientWidth - m.l - m.r,
@@ -46,12 +48,93 @@ function dataLoaded(err,trips,stations){
 			tripsByEndStn.filter(endStation.toString());
 			update( tripsByEndStn.top(Infinity) );
 		});
+
+	//A large blcok of code: how do we refractor this?
+
+	//Histogram of duration distribution
+	var MIN_DURATION = 0, MAX_DURATION = 3600; //Note the naming convention: all caps indicate constants
+	var histogramDuration = d3.histogram()
+		.value(function(d,i){return d.duration})
+		.domain([MIN_DURATION,MAX_DURATION])
+		.thresholds(d3.range(MIN_DURATION,MAX_DURATION,60));
+
+	//Represent
+	var scaleX = d3.scaleLinear().domain([MIN_DURATION,MAX_DURATION]).range([0,w]),
+		scaleY = d3.scaleLinear().domain([0,d3.max(histogramDuration(trips),function(d){return d.length})]).range([h,0]);
+
+	var bins = plot1.classed('histogram',true).selectAll('.bin')
+		.data(histogramDuration(trips))
+		.enter()
+		.append('rect').attr('class','bin')
+		.attr('x',function(d){return scaleX(d.x0)})
+		.attr('width',function(d){return scaleX(d.x1) - scaleX(d.x0)})
+		.attr('y', function(d){return scaleY(d.length)})
+		.attr('height',function(d){return h - scaleY(d.length)});
+
+	//x and y axis
+	var xAxis = d3.axisBottom()
+		.scale(scaleX)
+		.tickValues(d3.range(MIN_DURATION,MAX_DURATION+1,60*5))
+		.tickFormat(function(tick){return tick/60 + " min"});
+	var yAxis = d3.axisLeft();
+
+	plot1.append('g').attr('class','axis axis-x')
+		.attr('transform','translate(0,'+h+')')
+		.call(xAxis);
+
+	//Time-series
+		var t0 = new Date(2011,0,1), t1 = new Date(2013,11,31),
+		tThresholds = d3.timeDay.range(t0,t1,1); //interval.range(start, stop[, step]
+
+	var histogramTime = d3.histogram()
+		.domain([t0,t1])
+		.value(function(d){return d.startTime})
+		.thresholds(tThresholds);
+
+	//Represent
+	//Line and area
+	//Note: new scale function
+	var scaleXTime = d3.scaleTime()
+		.domain([t0,t1])
+		.range([0,w]);
+	var scaleYTime = d3.scaleLinear()
+		.domain([0,d3.max(histogramTime(trips),function(d){return d.length})])
+		.range([h,0])
+
+	var line = d3.line()
+		.x(function(d){return scaleXTime(new Date((d.x1.valueOf()+d.x0.valueOf())/2))})
+		.y(function(d){return scaleYTime(d.length)});
+
+	var area = d3.area()
+		.x(function(d){return scaleXTime(new Date((d.x1.valueOf()+d.x0.valueOf())/2))})
+		.y1(function(d){return scaleYTime(d.length)})
+		.y0(h);
+
+	plot2.append('path').attr('class','area')
+		.datum(histogramTime(trips))
+		.attr('d',area);
+	plot2.append('path').attr('class','line')
+		.datum(histogramTime(trips))
+		.attr('d',line);
+	//Axis
+	xAxis.scale(scaleXTime)
+		.tickValues(null)
+		.tickFormat(null)
+		.ticks(d3.timeMonth.every(3));
+	yAxis
+		.tickSize(-w)
+		.tickValues(d3.range(0,600,100))
+		.scale(scaleYTime);
+
+	plot2.append('g').attr('transform','translate(0,'+h+')')
+		.call(xAxis);
+	plot2.insert('g','.line').attr('class','axis axis-y') //line is "inserted" before area
+		.call(yAxis);
+
 }
 
 function update(arr){
-	console.log('--------crossfilter:update--------');
-	console.log('Start station: ' + stationMap.get(startStation));
-	console.log('End station: ' + stationMap.get(endStation));
+	console.log(stationMap.get(startStation) + ' to ' + stationMap.get(endStation));
 	console.log(arr);
 }
 
