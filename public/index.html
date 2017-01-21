@@ -7,10 +7,30 @@
 	</head>
 	<body>
 		<div class='container'>
+			<div class='control'>
+				<nav class='navbar navbar-default'>
+			      <ul class="nav navbar-nav">
+			        <li class="dropdown">
+			          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Start station <span class="caret"></span></a>
+			          <ul class="dropdown-menu" id="start-station">
+			            <!--<li><a href="#">Dropdown item</a></li>-->
+			          </ul>
+			        </li>
+			        <li class="dropdown">
+			          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">End station <span class="caret"></span></a>
+			          <ul class="dropdown-menu" id="end-station">
+			          </ul>
+			        </li>
+			      </ul>
+				</nav>
+			</div>
+			<div class='plot' id='plot1'></div>
+			<div class='plot' id='plot2'></div>
 		</div>
 
 		<script src='./lib/d3.js' type='text/javascript'></script>
 		<script src='./lib/crossfilter/crossfilter.js'></script>
+		<script src='./lib/bootstrap-3.3.7-dist/js/bootstrap.min.js'></script>
 		<script src='script.js' type='text/javascript'></script>
 	</body>
 </html>
