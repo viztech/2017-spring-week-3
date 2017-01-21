@@ -1,4 +1,3 @@
-//Set up a drawing environment
 var m = {t:85,r:100,b:50,l:100},
 	w = document.getElementById('plot1').clientWidth - m.l - m.r,
 	h = document.getElementById('plot1').clientHeight - m.t - m.b;
@@ -15,7 +14,8 @@ var plot1 = plots.filter(function(d,i){ return i===0;}),
 //Use a d3 map to store the list of station name, station id pairs as a map
 //d3 Methods to review
 	//d3.map()
-var stationMap = d3.map();
+var	startStation = null, endStation = null,
+	stationMap = d3.map();
 
 d3.queue()
 	.defer(d3.csv,'./data/hubway_trips_reduced.csv',parseTrips)
@@ -24,10 +24,33 @@ d3.queue()
 
 function dataLoaded(err,trips,stations){
 	//create a crossfilter
+	//and add dimensions for start and end stations
 	var cf = crossfilter(trips);
+	var tripsByStartStn = cf.dimension(function(d){return d.startStn}),
+		tripsByEndStn = cf.dimension(function(d){return d.endStn});
 
+	//Listen for changes in the dropdown menus
+	d3.select('#start-station')
+		.selectAll('.station')
+		.on('click',function(){ 
+			startStation = $(this).data('id'); //note how the 'data-id' attribute is retrieved
+			tripsByStartStn.filter(startStation.toString());
+			update( tripsByStartStn.top(Infinity) );
+		});
+	d3.select('#end-station')
+		.selectAll('.station')
+		.on('click',function(){
+			endStation = $(this).data('id');
+			tripsByEndStn.filter(endStation.toString());
+			update( tripsByEndStn.top(Infinity) );
+		});
+}
 
-
+function update(arr){
+	console.log('--------crossfilter:update--------');
+	console.log('Start station: ' + stationMap.get(startStation));
+	console.log('End station: ' + stationMap.get(endStation));
+	console.log(arr);
 }
 
 function parseTrips(d){
@@ -45,9 +68,25 @@ function parseTrips(d){
 }
 
 function parseStations(d){
-	stationMap.set(d.station, d.id);
+	//Populate stationMap
+	stationMap.set(d.id,d.station);
 
-	
+	//Populate the two drop-down menus
+	d3.select('.control').select('#start-station')
+		.append('li')
+		.append('a')
+		.attr('href','#')
+		.attr('data-id',d.id) //note the use of "data-" attributes; you can do this to store data on any HTML element
+		.attr('class','station')
+		.html(d.station);
+
+	d3.select('.control').select('#end-station')
+		.append('li')
+		.append('a')
+		.attr('href','#')
+		.attr('data-id',d.id)
+		.attr('class','station')
+		.html(d.station);
 
 	return {
 		id:d.id,
