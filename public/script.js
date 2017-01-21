@@ -1,3 +1,5 @@
+/*Example 2: This example demonstrates using Bootstrap UI elements to interact with crossfilter
+*/
 var m = {t:85,r:100,b:50,l:100},
 	w = document.getElementById('plot1').clientWidth - m.l - m.r,
 	h = document.getElementById('plot1').clientHeight - m.t - m.b;
